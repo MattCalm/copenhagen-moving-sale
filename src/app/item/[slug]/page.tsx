@@ -8,6 +8,10 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { getItemBySlug } from "@/lib/items";
 import { calculateDiscountPercent, calculateSavings, formatDate, formatMoney } from "@/lib/pricing";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

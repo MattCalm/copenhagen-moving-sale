@@ -1,5 +1,4 @@
 import { createPublicSupabaseClient } from "./supabase";
-import { sampleItems, sampleSettings } from "./sample-data";
 import type { AppSettings, Item, ItemImage } from "./types";
 
 type RawItem = Omit<Item, "images"> & {
@@ -17,7 +16,8 @@ export async function getItems(includeHidden = false): Promise<Item[]> {
   const supabase = createPublicSupabaseClient();
 
   if (!supabase) {
-    return sampleItems.filter((item) => includeHidden || item.visible);
+    console.warn("Supabase is not configured; public item data is unavailable.");
+    return [];
   }
 
   let query = supabase
@@ -44,7 +44,8 @@ export async function getItemBySlug(slug: string): Promise<Item | null> {
   const supabase = createPublicSupabaseClient();
 
   if (!supabase) {
-    return sampleItems.find((item) => item.slug === slug) ?? null;
+    console.warn("Supabase is not configured; public item data is unavailable.");
+    return null;
   }
 
   const { data, error } = await supabase
@@ -64,9 +65,13 @@ export async function getItemBySlug(slug: string): Promise<Item | null> {
 
 export async function getAppSettings(): Promise<AppSettings> {
   const supabase = createPublicSupabaseClient();
+  const defaultSettings: AppSettings = {
+    hide_sold_homepage: false
+  };
 
   if (!supabase) {
-    return sampleSettings;
+    console.warn("Supabase is not configured; public app settings are unavailable.");
+    return defaultSettings;
   }
 
   const { data, error } = await supabase
@@ -76,7 +81,7 @@ export async function getAppSettings(): Promise<AppSettings> {
     .maybeSingle();
 
   if (error || !data) {
-    return sampleSettings;
+    return defaultSettings;
   }
 
   return data;
