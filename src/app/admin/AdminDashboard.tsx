@@ -6,9 +6,15 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import type { AppSettings, Item, ItemFormValues, ItemImage, ItemStatus } from "@/lib/types";
 import { calculateDiscountPercent, calculateSavings, formatMoney } from "@/lib/pricing";
+import { chooseUniqueSlug, createSlugBase } from "@/lib/slugs";
 
 type RawItem = Omit<Item, "images"> & {
   item_images?: ItemImage[];
+};
+
+type SlugRow = {
+  id: string;
+  slug: string;
 };
 
 const blankItem: ItemFormValues = {
@@ -34,14 +40,6 @@ const blankItem: ItemFormValues = {
 
 const statuses: ItemStatus[] = ["Available", "Reserved", "Sold"];
 
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
-
 function normalizeItem(item: RawItem): Item {
   return {
     ...item,
@@ -57,6 +55,18 @@ function nullableNumber(value: FormDataEntryValue | null) {
 function nullableString(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text.length ? text : null;
+}
+
+function isUniqueSlugError(error: { code?: string; message?: string } | null) {
+  return error?.code === "23505" || Boolean(error?.message?.includes("items_slug_key"));
+}
+
+function friendlyErrorMessage(error: { code?: string; message?: string } | null) {
+  if (isUniqueSlugError(error)) {
+    return "That listing address is already in use. Please save again or choose a different slug.";
+  }
+
+  return error?.message ?? "Something went wrong. Please try again.";
 }
 
 async function optimizeImage(file: File) {
@@ -175,9 +185,17 @@ export function AdminDashboard() {
 
     const form = new FormData(event.currentTarget);
     const title = String(form.get("title") ?? "").trim();
+    const preferredSlug = String(form.get("slug") || title).trim();
+    const slug = await resolveUniqueSlug(preferredSlug, selectedItem?.id);
+
+    if (!slug) {
+      setBusy(false);
+      return;
+    }
+
     const payload = {
       title,
-      slug: String(form.get("slug") || slugify(title)).trim(),
+      slug,
       category: String(form.get("category") ?? "Furniture").trim(),
       brand: nullableString(form.get("brand")),
       model: nullableString(form.get("model")),
@@ -203,7 +221,7 @@ export function AdminDashboard() {
     setBusy(false);
 
     if (response.error) {
-      setMessage(response.error.message);
+      setMessage(friendlyErrorMessage(response.error));
       return;
     }
 
@@ -217,7 +235,7 @@ export function AdminDashboard() {
     if (!supabase) return;
     const { error } = await supabase.from("items").update(patch).eq("id", id);
     if (error) {
-      setMessage(error.message);
+      setMessage(friendlyErrorMessage(error));
       return;
     }
     setItems((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
@@ -236,11 +254,17 @@ export function AdminDashboard() {
 
   async function duplicateItem(item: Item) {
     if (!supabase) return;
+    const slug = await resolveUniqueSlug(`${item.slug}-copy`);
+
+    if (!slug) {
+      return;
+    }
+
     const { data, error } = await supabase
       .from("items")
       .insert({
         title: `${item.title} copy`,
-        slug: `${item.slug}-copy-${Date.now().toString(36)}`,
+        slug,
         category: item.category,
         brand: item.brand,
         model: item.model,
@@ -262,7 +286,7 @@ export function AdminDashboard() {
       .single();
 
     if (error) {
-      setMessage(error.message);
+      setMessage(friendlyErrorMessage(error));
       return;
     }
 
@@ -270,6 +294,29 @@ export function AdminDashboard() {
     setItems((current) => [...current, duplicated].sort((a, b) => a.sort_order - b.sort_order));
     setSelectedId(duplicated.id);
     setMessage("Duplicated as a hidden draft.");
+  }
+
+  async function resolveUniqueSlug(preferredSlug: string, excludeItemId?: string) {
+    if (!supabase) return null;
+
+    const baseSlug = createSlugBase(preferredSlug);
+    const { data, error } = await supabase
+      .from("items")
+      .select("id, slug")
+      .ilike("slug", `${baseSlug}%`);
+
+    if (error) {
+      setMessage("Could not check whether that listing address is available. Please try again.");
+      return null;
+    }
+
+    const basePattern = new RegExp(`^${baseSlug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:-\\d+)?$`);
+    const existingSlugs = ((data ?? []) as SlugRow[])
+      .filter((row) => row.id !== excludeItemId)
+      .map((row) => row.slug)
+      .filter((slug) => basePattern.test(slug));
+
+    return chooseUniqueSlug(baseSlug, existingSlugs);
   }
 
   async function moveItem(item: Item, direction: -1 | 1) {
