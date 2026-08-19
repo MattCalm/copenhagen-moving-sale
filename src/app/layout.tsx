@@ -4,15 +4,15 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
-    default: "Copenhagen Moving Sale",
-    template: "%s | Copenhagen Moving Sale"
+    default: "哥本哈根搬家二手清仓",
+    template: "%s | 哥本哈根搬家二手清仓"
   },
-  description: "A personal second-hand sale of well-kept furniture, home items, and everyday pieces before moving out of Copenhagen.",
+  description: "哥本哈根个人搬家二手清仓，仅 Bodenhoffs Plads 自取。",
   openGraph: {
-    title: "Copenhagen Moving Sale",
-    description: "Browse personal second-hand listings available for pickup in Copenhagen.",
+    title: "哥本哈根搬家二手清仓",
+    description: "个人二手搬家清仓，仅 Bodenhoffs Plads 自取。",
     type: "website",
-    locale: "en_DK"
+    locale: "zh_CN"
   }
 };
 
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <body className="font-sans antialiased">{children}</body>
     </html>
   );

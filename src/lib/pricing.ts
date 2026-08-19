@@ -28,6 +28,18 @@ export function formatMoney(value?: number | null, currency = "DKK") {
   }).format(value);
 }
 
+export function formatPublicPrice(value?: number | null, currency = "DKK") {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "未填写";
+  }
+
+  const amount = new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 0
+  }).format(value);
+
+  return `${amount} ${currency}`;
+}
+
 export function formatDate(value?: string | null) {
   if (!value) {
     return "Not checked yet";

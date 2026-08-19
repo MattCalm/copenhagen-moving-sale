@@ -35,7 +35,7 @@ export function ShareButton({ title }: Props) {
       className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-ink/12 bg-white px-4 text-sm font-semibold text-ink transition hover:border-pine hover:text-pine"
     >
       {copied ? <Check className="h-4 w-4" /> : canNativeShare ? <Share2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      {copied ? "Copied" : "Share"}
+      {copied ? "已复制" : "分享"}
     </button>
   );
 }

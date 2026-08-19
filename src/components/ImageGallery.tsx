@@ -16,7 +16,7 @@ export function ImageGallery({ title, images }: Props) {
   if (!selected) {
     return (
       <div className="grid aspect-[4/3] place-items-center rounded-lg border border-dashed border-ink/20 bg-white/70 text-ink/55">
-        Photo coming soon
+        暂无图片
       </div>
     );
   }
