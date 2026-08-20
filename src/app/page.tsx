@@ -1,12 +1,12 @@
 import { SaleBrowser } from "@/components/SaleBrowser";
-import { getAppSettings, getItems } from "@/lib/items";
+import { getItems } from "@/lib/items";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
 export default async function Home() {
-  const [items, settings] = await Promise.all([getItems(), getAppSettings()]);
+  const items = await getItems();
 
   return (
     <main className="min-h-screen">
@@ -23,7 +23,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <SaleBrowser items={items} hideSoldHomepage={settings.hide_sold_homepage} />
+      <SaleBrowser items={items} />
     </main>
   );
 }

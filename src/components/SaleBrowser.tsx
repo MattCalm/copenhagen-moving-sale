@@ -8,11 +8,16 @@ import type { Item } from "@/lib/types";
 
 type Props = {
   items: Item[];
-  hideSoldHomepage: boolean;
 };
 
 const preferredCategories = ["Furniture", "Electronics", "Appliances", "Kitchen", "Other"];
-export function SaleBrowser({ items, hideSoldHomepage }: Props) {
+const statusOrder = {
+  Available: 0,
+  Reserved: 1,
+  Sold: 2
+};
+
+export function SaleBrowser({ items }: Props) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
@@ -30,7 +35,6 @@ export function SaleBrowser({ items, hideSoldHomepage }: Props) {
     const query = search.trim().toLowerCase();
 
     return items
-      .filter((item) => !hideSoldHomepage || item.status !== "Sold")
       .filter((item) => category === "All" || item.category === category)
       .filter((item) => {
         if (!query) {
@@ -41,8 +45,13 @@ export function SaleBrowser({ items, hideSoldHomepage }: Props) {
           .filter(Boolean)
           .some((value) => value!.toLowerCase().includes(query));
       })
-      .sort((a, b) => Number(b.featured) - Number(a.featured) || a.sort_order - b.sort_order);
-  }, [category, hideSoldHomepage, items, search]);
+      .sort(
+        (a, b) =>
+          statusOrder[a.status] - statusOrder[b.status] ||
+          Number(b.featured) - Number(a.featured) ||
+          a.sort_order - b.sort_order
+      );
+  }, [category, items, search]);
 
   return (
     <section className="mx-auto grid w-full max-w-4xl gap-5 px-4 pb-14 sm:px-6">

@@ -40,6 +40,21 @@ export function formatPublicPrice(value?: number | null, currency = "DKK") {
   return `${amount} ${currency}`;
 }
 
+export function getReferencePrice(
+  currentRetailPrice?: number | null,
+  originalPurchasePrice?: number | null
+) {
+  if (currentRetailPrice && currentRetailPrice > 0) {
+    return currentRetailPrice;
+  }
+
+  if (originalPurchasePrice && originalPurchasePrice > 0) {
+    return originalPurchasePrice;
+  }
+
+  return null;
+}
+
 export function formatDate(value?: string | null) {
   if (!value) {
     return "Not checked yet";

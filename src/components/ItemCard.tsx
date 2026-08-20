@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { formatPublicPrice } from "@/lib/pricing";
+import { formatPublicPrice, getReferencePrice } from "@/lib/pricing";
 import type { Item } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -10,6 +10,7 @@ type Props = {
 
 export function ItemCard({ item }: Props) {
   const primaryImage = item.images.find((image) => image.is_primary) ?? item.images[0];
+  const referencePrice = getReferencePrice(item.current_retail_price, item.original_purchase_price);
 
   return (
     <Link
@@ -23,7 +24,7 @@ export function ItemCard({ item }: Props) {
             alt={primaryImage.alt_text ?? item.title}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition duration-500 group-hover:scale-[1.03]"
+            className={item.status === "Sold" ? "object-cover opacity-70 grayscale transition duration-500 group-hover:scale-[1.03]" : "object-cover transition duration-500 group-hover:scale-[1.03]"}
           />
         ) : (
           <div className="flex h-full items-center justify-center px-6 text-center text-sm text-ink/55">
@@ -48,9 +49,9 @@ export function ItemCard({ item }: Props) {
             <p className="text-sm font-semibold text-ink/55">二手价</p>
             <p className="text-3xl font-black text-pine">{formatPublicPrice(item.selling_price, item.currency)}</p>
           </div>
-          {item.current_retail_price !== null && item.current_retail_price !== undefined && (
+          {referencePrice !== null && (
             <p className="text-sm font-medium text-ink/60">
-              新品参考价 <span className="line-through">{formatPublicPrice(item.current_retail_price, item.currency)}</span>
+              新品参考价 <span className="line-through">{formatPublicPrice(referencePrice, item.currency)}</span>
             </p>
           )}
         </div>
